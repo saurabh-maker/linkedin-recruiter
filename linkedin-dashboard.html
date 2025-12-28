@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LinkedIn Data Blind Spots Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #0a0a0f 100%);
+      min-height: 100vh;
+      color: #ffffff;
+      overflow-x: hidden;
+    }
+
+    /* Animated background */
+    .bg-grid {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: 
+        linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+      background-size: 50px 50px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .glow-orb {
+      position: fixed;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      filter: blur(150px);
+      opacity: 0.15;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .glow-orb-1 {
+      top: -200px;
+      right: -200px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    }
+
+    .glow-orb-2 {
+      bottom: -200px;
+      left: -200px;
+      background: linear-gradient(135deg, #0ea5e9, #06b6d4);
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 60px;
+      animation: fadeInDown 0.8s ease-out;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(99, 102, 241, 0.1);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      padding: 8px 16px;
+      border-radius: 50px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #a5b4fc;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 20px;
+    }
+
+    .badge i {
+      font-size: 10px;
+    }
+
+    .header h1 {
+      font-size: clamp(32px, 5vw, 56px);
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #ffffff 0%, #94a3b8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header h1 span {
+      background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header p {
+      font-size: 18px;
+      color: #64748b;
+      max-width: 600px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* Stats Bar */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 50px;
+      animation: fadeInUp 0.8s ease-out 0.2s both;
+    }
+
+    .stat-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(99, 102, 241, 0.3);
+      box-shadow: 0 20px 40px rgba(99, 102, 241, 0.1);
+    }
+
+    .stat-number {
+      font-size: 36px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: #64748b;
+      font-weight: 500;
+    }
+
+    /* Table Header */
+    .table-header {
+      display: grid;
+      grid-template-columns: 1fr 1.5fr 1.5fr;
+      gap: 20px;
+      padding: 20px 30px;
+      background: rgba(99, 102, 241, 0.1);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      border-radius: 16px 16px 0 0;
+      margin-bottom: 2px;
+    }
+
+    .table-header-item {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #a5b4fc;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .table-header-item i {
+      font-size: 14px;
+    }
+
+    /* Insight Cards */
+    .insights-container {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      animation: fadeInUp 0.8s ease-out 0.4s both;
+    }
+
+    .insight-card {
+      display: grid;
+      grid-template-columns: 1fr 1.5fr 1.5fr;
+      gap: 20px;
+      padding: 28px 30px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .insight-card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 3px;
+      background: linear-gradient(180deg, #6366f1, #a855f7);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .insight-card:hover {
+      background: rgba(99, 102, 241, 0.05);
+      border-color: rgba(99, 102, 241, 0.2);
+      transform: translateX(4px);
+    }
+
+    .insight-card:hover::before {
+      opacity: 1;
+    }
+
+    .insight-card:last-child {
+      border-radius: 0 0 16px 16px;
+    }
+
+    .linkedin-shows {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .icon-wrapper {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 16px;
+    }
+
+    .icon-wrapper.blue {
+      background: rgba(14, 165, 233, 0.15);
+      color: #0ea5e9;
+    }
+
+    .icon-wrapper.purple {
+      background: rgba(139, 92, 246, 0.15);
+      color: #8b5cf6;
+    }
+
+    .icon-wrapper.pink {
+      background: rgba(236, 72, 153, 0.15);
+      color: #ec4899;
+    }
+
+    .icon-wrapper.green {
+      background: rgba(34, 197, 94, 0.15);
+      color: #22c55e;
+    }
+
+    .icon-wrapper.orange {
+      background: rgba(249, 115, 22, 0.15);
+      color: #f97316;
+    }
+
+    .icon-wrapper.cyan {
+      background: rgba(6, 182, 212, 0.15);
+      color: #06b6d4;
+    }
+
+    .shows-content h3 {
+      font-size: 15px;
+      font-weight: 600;
+      color: #e2e8f0;
+      margin-bottom: 4px;
+    }
+
+    .shows-content p {
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    .reality-column, .solution-column {
+      font-size: 14px;
+      line-height: 1.7;
+      color: #94a3b8;
+    }
+
+    .reality-column {
+      padding-left: 20px;
+      border-left: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .solution-column {
+      padding-left: 20px;
+      border-left: 1px solid rgba(255, 255, 255, 0.06);
+      color: #a5b4fc;
+    }
+
+    .highlight {
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    .stat-highlight {
+      color: #f472b6;
+      font-weight: 700;
+    }
+
+    .quote-mark {
+      color: #6366f1;
+      font-style: italic;
+    }
+
+    /* Bottom Section */
+    .bottom-section {
+      margin-top: 60px;
+      animation: fadeInUp 0.8s ease-out 0.6s both;
+    }
+
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 30px;
+    }
+
+    .takeaway-card {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(168, 85, 247, 0.05) 100%);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      border-radius: 20px;
+      padding: 40px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .takeaway-card::before {
+      content: '"';
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      font-size: 120px;
+      font-weight: 800;
+      color: rgba(99, 102, 241, 0.1);
+      line-height: 1;
+    }
+
+    .takeaway-card h2 {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      color: #ffffff;
+    }
+
+    .takeaway-list {
+      list-style: none;
+    }
+
+    .takeaway-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 16px;
+      font-size: 15px;
+      color: #94a3b8;
+      line-height: 1.6;
+    }
+
+    .takeaway-list li i {
+      color: #6366f1;
+      margin-top: 4px;
+    }
+
+    .final-quote {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 20px;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .final-quote p {
+      font-size: 18px;
+      line-height: 1.8;
+      color: #e2e8f0;
+      margin-bottom: 20px;
+    }
+
+    .final-quote p:last-of-type {
+      margin-bottom: 0;
+    }
+
+    .final-quote .accent {
+      color: #a855f7;
+      font-weight: 600;
+    }
+
+    .final-quote .dim {
+      color: #64748b;
+    }
+
+    .signature {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 13px;
+      color: #64748b;
+      font-style: italic;
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      margin-top: 60px;
+      padding-top: 40px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .footer p {
+      font-size: 14px;
+      color: #475569;
+    }
+
+    .footer span {
+      color: #6366f1;
+    }
+
+    /* Animations */
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .table-header,
+      .insight-card {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      .table-header-item:not(:first-child) {
+        display: none;
+      }
+
+      .reality-column,
+      .solution-column {
+        padding-left: 0;
+        border-left: none;
+        padding-top: 12px;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+      }
+
+      .reality-column::before {
+        content: 'Reality: ';
+        color: #f472b6;
+        font-weight: 600;
+      }
+
+      .solution-column::before {
+        content: 'Solution: ';
+        color: #6366f1;
+        font-weight: 600;
+      }
+
+      .bottom-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .container {
+        padding: 20px 16px;
+      }
+
+      .header h1 {
+        font-size: 28px;
+      }
+
+      .stat-card {
+        padding: 20px;
+      }
+
+      .stat-number {
+        font-size: 28px;
+      }
+
+      .insight-card {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="glow-orb glow-orb-1"></div>
+  <div class="glow-orb glow-orb-2"></div>
+
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="badge">
+        <i class="fas fa-bolt"></i>
+        Talent Intelligence Framework
+      </div>
+      <h1>What LinkedIn Data <span>Will Never Tell You</span> About the Talent Market</h1>
+      <p>The uncomfortable truths from 12+ years and 10,000+ placements that separate elite sourcers from everyone else.</p>
+    </header>
+
+    <!-- Stats Bar -->
+    <div class="stats-bar">
+      <div class="stat-card">
+        <div class="stat-number">40%</div>
+        <div class="stat-label">Top talent has poor/no LinkedIn</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">70%</div>
+        <div class="stat-label">InMail responses seeking counteroffers</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">$800K</div>
+        <div class="stat-label">Walked away by candidates with standards</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">2B+</div>
+        <div class="stat-label">Requests/day handled by "outdated profile" eng</div>
+      </div>
+    </div>
+
+    <!-- Table Header -->
+    <div class="table-header">
+      <div class="table-header-item">
+        <i class="fab fa-linkedin"></i>
+        What LinkedIn Shows
+      </div>
+      <div class="table-header-item">
+        <i class="fas fa-eye-slash"></i>
+        The Reality Nobody Talks About
+      </div>
+      <div class="table-header-item">
+        <i class="fas fa-key"></i>
+        What Top Sourcers Actually Do
+      </div>
+    </div>
+
+    <!-- Insights -->
+    <div class="insights-container">
+      
+      <div class="insight-card">
+        <div class="linkedin-shows">
+          <div class="icon-wrapper green">
+            <i class="fas fa-briefcase"></i>
+          </div>
+          <div class="shows-content">
+            <h3>"Open to Work" Badge</h3>
+            <p>Green banner visible</p>
+          </div>
+        </div>
+        <div class="reality-column">
+          That badge often means <span class="highlight">their network already passed on them</span>. The best people get pulled before they ever need to signal.
+        </div>
+        <div class="solution-column">
+          Track who's <span class="highlight">following competitors</span>, liking job posts, or suddenly updating headlines. That's the real "open to work" signal.
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="linkedin-shows">
+          <div class="icon-wrapper blue">
+            <i class="fas fa-calendar-alt"></i>
+          </div>
+          <div class="shows-content">
+            <h3>3 Years at Company X</h3>
+            <p>Tenure timeline</p>
+          </div>
+        </div>
+        <div class="reality-column">
+          I've placed "3 year tenure" candidates who were <span class="highlight">quietly managed out</span>. I've also placed "job hoppers" who left because they <span class="highlight">saw fraud happening</span>. Tenure means nothing without the story.
+        </div>
+        <div class="solution-column">
+          Call their <span class="highlight">skip-level manager</span> or a peer who left 6 months before them. They'll tell you what actually happened.
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="linkedin-shows">
+          <div class="icon-wrapper purple">
+            <i class="fas fa-thumbs-up"></i>
+          </div>
+          <div class="shows-content">
+            <h3>99+ Endorsements</h3>
+            <p>"Leadership" skills</p>
+          </div>
+        </div>
+        <div class="reality-column">
+          A CPO I placed had <span class="stat-highlight">12 endorsements total</span>. He'd built 3 products to $100M+. The guy with 500 endorsements couldn't ship a feature.
+        </div>
+        <div class="solution-column">
+          Ignore endorsements completely. Ask: <span class="quote-mark">"What shipped because you were in the room?"</span>
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="linkedin-shows">
+          <div class="icon-wrapper cyan">
+            <i class="fas fa-users"></i>
+          </div>
+          <div class="shows-content">
+            <h3>3,000 Connections</h3>
+            <p>Network size</p>
+          </div>
+        </div>
+        <div class="reality-column">
+          Met a CTO with <span class="stat-highlight">400 connections</span> who could text any founder in the Valley. Met another with 12K who couldn't get a reference call returned.
+        </div>
+        <div class="solution-column">
+          Ask: <span class="quote-mark">"Who's someone you had conflict with but still respects your work?"</span> That answer tells you everything.
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="linkedin-shows">
+          <div class="icon-wrapper orange">
+            <i class="fas fa-id-badge"></i>
+          </div>
+          <div class="shows-content">
+            <h3>Title: "Senior Director"</h3>
+            <p>Impressive sounding</p>
+          </div>
+        </div>
+        <div class="reality-column">
+          Some companies hand out Director titles at 28 to retain people. Others make you earn VP over 15 years. <span class="highlight">Title inflation is out of control.</span>
+        </div>
+        <div class="solution-column">
+          Ask about <span class="highlight">budget owned, team size, and reporting line</span>. A "Manager" at Stripe often outranks a "VP" at a 50-person startup.
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="linkedin-shows">
+          <div class="icon-wrapper green">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <div class="shows-content">
+            <h3>Profile Looks Complete</h3>
+            <p>Updated info</p>
+          </div>
+        </div>
+        <div class="reality-column">
+          <span class="stat-highlight">40%</span> of the best engineers I've placed had profiles that look abandoned. One had a 2015 photo. He'd architected systems handling <span class="stat-highlight">2B requests/day</span>.
+        </div>
+        <div class="solution-column">
+          <span class="highlight">Patent databases. GitHub. Conference speakers. Academic citations.</span> That's where builders actually leave fingerprints.
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="linkedin-shows">
+          <div class="icon-wrapper pink">
+            <i class="fas fa-sign-out-alt"></i>
+          </div>
+          <div class="shows-content">
+            <h3>Left After "2 Years"</h3>
+            <p>Short tenure flag</p>
+          </div>
+        </div>
+        <div class="reality-column">
+          What you don't see: their equity cliff was 4 years, and they <span class="highlight">walked away from $800K</span> because the culture was that bad. That's a candidate with actual standards.
+        </div>
+        <div class="solution-column">
+          Ask: <span class="quote-mark">"What did walking away cost you financially?"</span> Candidates who left money on the table for principles are gold.
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="linkedin-shows">
+          <div class="icon-wrapper blue">
+            <i class="fas fa-building"></i>
+          </div>
+          <div class="shows-content">
+            <h3>Currently at Company X</h3>
+            <p>Employment status</p>
+          </div>
+        </div>
+        <div class="reality-column">
+          Their CEO just got replaced last week. Their team is being "reorged" next month. They're about to vest <span class="stat-highlight">$2M</span> and will finally be free. <span class="highlight">LinkedIn shows none of this.</span>
+        </div>
+        <div class="solution-column">
+          Set <span class="highlight">Google alerts</span> for company news. Track leadership changes. Know the vesting schedules. <span class="highlight">Call at the right moment.</span>
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="linkedin-shows">
+          <div class="icon-wrapper purple">
+            <i class="fab fa-google"></i>
+          </div>
+          <div class="shows-content">
+            <h3>Google, Meta, Amazon</h3>
+            <p>Big tech logos</p>
+          </div>
+        </div>
+        <div class="reality-column">
+          Half of them <span class="highlight">won't survive without the infrastructure</span>, processes, and army of support those companies provide. Throw them into a startup and they're lost.
+        </div>
+        <div class="solution-column">
+          Ask: <span class="quote-mark">"Tell me about a time you built something with no playbook and no resources."</span> Watch their face.
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="linkedin-shows">
+          <div class="icon-wrapper orange">
+            <i class="fas fa-envelope-open"></i>
+          </div>
+          <div class="shows-content">
+            <h3>Responded to InMail</h3>
+            <p>"Interested" candidate</p>
+          </div>
+        </div>
+        <div class="reality-column">
+          <span class="stat-highlight">70%</span> of people who respond enthusiastically use you to get a counteroffer. They never intended to leave. <span class="highlight">You're free leverage.</span>
+        </div>
+        <div class="solution-column">
+          First question: <span class="quote-mark">"If your current company matches, what happens?"</span> If they hesitate more than <span class="stat-highlight">2 seconds</span>, they're not serious.
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bottom Section -->
+    <div class="bottom-section">
+      <div class="bottom-grid">
+        <div class="takeaway-card">
+          <h2>The Real Game</h2>
+          <ul class="takeaway-list">
+            <li>
+              <i class="fas fa-arrow-right"></i>
+              Who answers when someone important calls
+            </li>
+            <li>
+              <i class="fas fa-arrow-right"></i>
+              What people say about them when they're not in the room
+            </li>
+            <li>
+              <i class="fas fa-arrow-right"></i>
+              What they walked away from and why
+            </li>
+            <li>
+              <i class="fas fa-arrow-right"></i>
+              When their handcuffs unlock
+            </li>
+          </ul>
+        </div>
+        <div class="final-quote">
+          <p>The best hire for your role might have <span class="accent">200 connections</span> and a profile picture from 2018.</p>
+          <p>The worst hire might have <span class="accent">15K followers</span> and a <span class="dim">"Top Voice"</span> badge.</p>
+          <div class="signature">
+            Data is the start. Intelligence is the advantage.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>Built for sourcers who play <span>chess, not checkers</span>.</p>
+    </footer>
+  </div>
+
+  <script>
+    // Add scroll-triggered animations
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+        }
+      });
+    }, observerOptions);
+
+    // Observe insight cards for staggered animation
+    document.querySelectorAll('.insight-card').forEach((card, index) => {
+      card.style.opacity = '0';
+      card.style.transform = 'translateY(20px)';
+      card.style.transition = `all 0.5s ease ${index * 0.05}s`;
+      observer.observe(card);
+    });
+
+    // Add hover sound effect simulation with subtle scale
+    document.querySelectorAll('.insight-card').forEach(card => {
+      card.addEventListener('mouseenter', () => {
+        card.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+      });
+    });
+
+    // Stat number animation
+    const animateStats = () => {
+      const stats = document.querySelectorAll('.stat-number');
+      stats.forEach(stat => {
+        const text = stat.textContent;
+        const hasPercent = text.includes('%');
+        const hasDollar = text.includes('$');
+        const hasPlus = text.includes('+');
+        const hasB = text.includes('B');
+        
+        let targetNum;
+        if (hasB) {
+          targetNum = 2;
+        } else {
+          targetNum = parseInt(text.replace(/[^0-9]/g, ''));
+        }
+        
+        let current = 0;
+        const increment = targetNum / 50;
+        const duration = 1500;
+        const stepTime = duration / 50;
+        
+        const timer = setInterval(() => {
+          current += increment;
+          if (current >= targetNum) {
+            current = targetNum;
+            clearInterval(timer);
+          }
+          
+          let display = Math.floor(current);
+          if (hasDollar) display = '$' + display + 'K';
+          else if (hasPercent) display = display + '%';
+          else if (hasB) display = display + 'B+';
+          else if (hasPlus) display = display + '+';
+          
+          stat.textContent = display;
+        }, stepTime);
+      });
+    };
+
+    // Run stat animation when page loads
+    setTimeout(animateStats, 500);
+  </script>
+</body>
+</html>
